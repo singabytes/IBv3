@@ -101,8 +101,6 @@ public class GetEventsFromFxCalendar implements CommandLineRunner {
         Elements rows = doc.select("tr");
         List<CalendarEvent> eventArray = new ArrayList<>();
         
-        CalendarEvent event = new CalendarEvent();
-
         // Variables to remember the previous velue
         // useful for date and time that are not always set
         String date = "";
@@ -110,7 +108,9 @@ public class GetEventsFromFxCalendar implements CommandLineRunner {
             
         for (int i = 0; i < rows.size(); i++) {
             Element row = rows.get(i);
-
+            
+            CalendarEvent event = new CalendarEvent();
+            
             if (!row.hasClass("calendar__row calendar_row calendar__row--grey calendar__row--new-day newday") &&
                 !row.hasClass("calendar__row calendar_row calendar__row--grey") &&
                 !row.hasClass("calendar__row calendar_row") && // only date + time + event or only event
