@@ -15,6 +15,8 @@ import org.jsoup.select.Elements;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.beans.factory.annotation.Autowired;
+
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,17 +26,26 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.logging.Level;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 /**
  *
  * @author Apple
  */
-@SpringBootApplication
+//@SpringBootApplication
+@SpringBootApplication(scanBasePackages = { "com.singabytes", "com.singabytes.repositories" })
+//@EnableJpaRepositories("com.singabytes.repositories")
 public class GetEventsFromFxCalendar implements CommandLineRunner {
 
     private final Logger logger = LoggerFactory.getLogger(GetEventsFromFxCalendar.class);
     private BufferedWriter writer = null; 
+    
+    @Autowired
+    private CalendarEventRepository repository;
      
     public static void main(String[] args) throws Exception {
         SpringApplication.run(GetEventsFromFxCalendar.class, args);
@@ -45,10 +56,11 @@ public class GetEventsFromFxCalendar implements CommandLineRunner {
         String date = "Oct9.2017";    
         logger.info("Query calendar events for date " + date);
         //List<CalendarEvent> event = queryCalendarEvent(date);
-        getAllEventsOnFile("2017");
+        getAllEventsOnMongo("2017");
+        getAllEventsFromMongo();
     }
 
-    private void getAllEventsOnFile(String year) {
+    private void getAllEventsOnMongo(String year) {
         List<String> month = new ArrayList<>();
         month.add("Jan"); month.add("Feb"); month.add("Mar"); month.add("Apr");
         month.add("May"); month.add("Jun"); month.add("Jul"); month.add("Aug");
@@ -57,29 +69,46 @@ public class GetEventsFromFxCalendar implements CommandLineRunner {
         for (int j=0; j<month.size(); j++) {
             for (int i=1; i<32; i++) {
                 String date = month.get(j) + i + "." + year;
-                logger.info("Retrieving events fro date = " + date);
+                logger.info("Retrieving events for date = " + date);
                 List<CalendarEvent> event = queryCalendarEvent(date);
                 
                 for (int e=0; e<event.size(); e++) {
-                   if (writer == null) {
+                    // Write event to file   
+                    if (writer == null) {
                         try {
                             writer = new BufferedWriter(new FileWriter("CalendarEvents"+year));
                         } catch (IOException ex) {
                             logger.error("Error when creating event file");
                             logger.error(ex.getMessage());
                         }
-                   }
-                   try {
+                    }
+                    try {
                         writer.write(event.get(e).toString() + "\n");
                     } catch (IOException ex) {
                             logger.error("Error when writing in event file");
                             logger.error(ex.getMessage());
                     }
+                    
+                    // Write event to Mongo
+                    try {
+                        repository.save(event);
+                    } catch (Exception ex) {
+                        logger.error("Issue when saving calendar event to Mongo");
+                        logger.error(ex.getMessage());
+                    }
                 }
+           }
         }
-        
     }
-}
+    
+    private void getAllEventsFromMongo() {
+        System.out.println("Calendar Event found with findAll():");
+	System.out.println("-------------------------------");
+	for (CalendarEvent event : repository.findAll()) {
+            System.out.println(event.toString());
+	}
+	System.out.println();
+    }
     
     
     private List<CalendarEvent> queryCalendarEvent(String eventDate) {
