@@ -6,11 +6,21 @@
 package com.singabytes.models;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  *
  * @author Apple
  */
+
+// Document annotation needs to be added otherwise Index is ignored
+// https://docs.spring.io/spring-data/mongodb/docs/current/reference/html/#mapping-usage
+@Document
+@CompoundIndexes({
+    @CompoundIndex(name = "calendareventidx", unique = true, def = "{'date' : 1, 'currency': 1, 'event': 1}")
+})
 public class CalendarEvent {
     
     @Id
