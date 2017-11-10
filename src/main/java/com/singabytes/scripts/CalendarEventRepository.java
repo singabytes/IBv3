@@ -8,13 +8,14 @@ package com.singabytes.scripts;
 import com.singabytes.models.CalendarEvent;
 import java.util.List;
 import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.rest.core.annotation.RepositoryRestResource;
+
 
 /**
  *
  * @author Apple
  */
-@Repository
+@RepositoryRestResource(collectionResourceRel  = "event", path = "event")
 public interface CalendarEventRepository extends MongoRepository<CalendarEvent, String> {
     public List<CalendarEvent> findByDate(String date);
 }
