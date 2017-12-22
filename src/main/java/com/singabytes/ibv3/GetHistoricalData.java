@@ -30,6 +30,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.cli.*;
+
 
 // RealTimeData Class is an implementation of the 
 // IB API EWrapper class
@@ -38,7 +40,11 @@ public class GetHistoricalData implements EWrapper
         
     public BufferedWriter writer = null; 
     public String filename = null; 
-    static public String startDate = null;
+    // Parameters for the market data request
+    public String reqEndDateTime = null;
+    public String reqDuration = null;
+    public String reqBarSize = null;
+    public Contract reqContract = null;
     
     // Add for API 9.72
         private EJavaSignal m_signal = new EJavaSignal();
@@ -50,18 +56,22 @@ public class GetHistoricalData implements EWrapper
 
 	public GetHistoricalData ()
 	{
-		// Create a new EClientSocket object API 9.71
-      		// client = new EClientSocket (this);
+        }
+        
+        private void run() {
+            
+            // Create a new EClientSocket object API 9.71
+            // client = new EClientSocket (this);
 
-                // Create a new EClientSocket object API 9.72
-                client = new EClientSocket( this, m_signal);
+            // Create a new EClientSocket object API 9.72
+            client = new EClientSocket( this, m_signal);
 
-		// Connect to the TWS or IB Gateway application
-		// Leave null for localhost
-		// Port Number (should match TWS/IB Gateway configuration)
-		client.eConnect (null, 4001, 0);
-		// Pause here for connection to complete
-                try 
+            // Connect to the TWS or IB Gateway application
+            // Leave null for localhost
+            // Port Number (should match TWS/IB Gateway configuration)
+            client.eConnect (null, 4002, 0);
+            // Pause here for connection to complete
+              try 
 		{
                     System.out.println("Trying to connect...");
                     while (! (client.isConnected()));
@@ -83,22 +93,27 @@ public class GetHistoricalData implements EWrapper
 				}
 		}.start();
 		// Create a new contract
-		Contract contract = new Contract ();
-		contract.symbol("EUR");
-		contract.exchange("IDEALPRO");
-		contract.secType("CASH");
-		contract.currency("USD");
+		//Contract contract = new Contract ();
+		//contract.symbol("EUR");
+		//contract.exchange("IDEALPRO");
+		//contract.secType("CASH");
+		//contract.currency("USD");
 		// Create a TagValue list for chartOptions
 		Vector<TagValue> chartOptions = new Vector<TagValue>();
 		// Make a call to start off data historical retrieval
-                System.out.println("Requesting market data....");
-		client.reqHistoricalData(0, contract, 
-                                         startDate + " 23:59:00",  // End Date/Time
-                                         "2 D",                // Duration
-                                         "5 mins",              // Bar size
-                                         "MIDPOINT",             // What to show
-                                         0,                    // useRTH
-                                         1,                    // dateFormat
+                System.out.println("Requesting market data with parameters");
+                System.out.println("Instrument " + reqContract.symbol());
+                System.out.println("End datetime " + reqEndDateTime);
+                System.out.println("Duration " + reqDuration);
+                System.out.println("BarSize " + reqBarSize);
+                
+		client.reqHistoricalData(0, reqContract, 
+                                         reqEndDateTime,    // End Date/Time
+                                         reqDuration,          // Duration (e.g. 2D)
+                                         reqBarSize,          // Bar size (e.g. 5 mis)
+                                         "MIDPOINT",       // What to show
+                                         0,                // useRTH
+                                         1,                // dateFormat
                                          chartOptions);
 		// You may need to leave off the chartOptions parameter depending on your API version
 		// At this point our call is done and any market data events
@@ -208,14 +223,22 @@ public class GetHistoricalData implements EWrapper
             System.out.println(date + " open= " + open + " high= " + high + " volume= " + volume + " count= " + count);
             if (writer == null) {
                 try {
-                    writer = new BufferedWriter(new FileWriter("EURUSD"+startDate));
+                    String filename = reqContract.symbol() + "-";
+                    filename += reqContract.currency() + "-";
+                    filename += reqEndDateTime.replace(" ","").replace(":","") + "-";
+                    filename += reqDuration.replace(" ", "") + "-";
+                    filename += reqBarSize.replace(" ", "");
+                                        
+                    String msg = "Create file : " + filename;
+                    Logger.getLogger(GetHistoricalData.class.getName()).log(Level.INFO, null, msg);
+                    writer = new BufferedWriter(new FileWriter(filename));
                 } catch (IOException ex) {
                     Logger.getLogger(GetHistoricalData.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
             
             try {
-                if (!date.contains("finished") && date.contains(startDate))
+                if (!date.contains("finished")/* && date.contains(reqEndDateTime.substring(0,7))*/)
                     writer.write(date + "," + open + "," + high + "," + low + "," + close + "\n");
             } 
             catch (IOException e) {
@@ -335,25 +358,77 @@ public class GetHistoricalData implements EWrapper
 
 public static void main (String args[])
     {
-        try
-        {
-		// Create an instance
-		// At this time a connection will be made
-		// and the request for market data will happen
+        // Create an instance
+	// At this time a connection will be made
+	// and the request for market data will happen
                 
-                if (args.length > 0) {
-                    System.out.println(args[0]);
-                    startDate = args[0];
-                }
-                else
-                    startDate = "20171017";
+        if (args.length > 0) {
+            System.out.println(args[0]);
+        }
                 
-                GetHistoricalData myData = new GetHistoricalData();
+        Options options = new Options();
+
+        Option enddatetime = new Option("edt", "enddatetime", true, "Request end datetime [20171115 00:00:00]");
+        enddatetime.setRequired(true);
+        options.addOption(enddatetime);
+
+        Option duration = new Option("dur", "duration", true, "Request duration [2 D]");
+        duration.setRequired(true);
+        options.addOption(duration);
+
+        Option barsize = new Option("bar", "barsize", true, "Request bar size [5 mins]");
+        barsize.setRequired(true);
+        options.addOption(barsize);
+        
+        Option symbol = new Option("sym", "symbol", true, "Request contract symbol [EUR]");
+        symbol.setRequired(true);
+        options.addOption(symbol);
+        
+        Option exchange = new Option("exc", "exchange", true, "Request contract exchange [IDEALPRO]");
+        exchange.setRequired(true);
+        options.addOption(exchange);
+        
+        Option secType = new Option("sec", "securitytype", true, "Request contract security type [CASH]");
+        secType.setRequired(true);
+        options.addOption(secType);
+        
+        Option currency = new Option("cur", "currency", true, "Request contract currency [USD]");
+        currency.setRequired(true);
+        options.addOption(currency);
+        
+        CommandLineParser parser = new DefaultParser();
+        HelpFormatter formatter = new HelpFormatter();
+        
+        CommandLine cmd;
+
+        try {
+            cmd = parser.parse(options, args);
+        } catch (ParseException e) {
+            System.out.println(e.getMessage());
+            formatter.printHelp("utility-name", options);
+
+            System.exit(1);
+            return;
+        }
+
+        // Create a new contract
+        Contract reqContract = new Contract ();
+	reqContract.symbol(cmd.getOptionValue("symbol"));
+	reqContract.exchange(cmd.getOptionValue("exchange"));
+	reqContract.secType(cmd.getOptionValue("securitytype"));
+	reqContract.currency(cmd.getOptionValue("currency"));
+
+        try {
+            GetHistoricalData myData = new GetHistoricalData();
+            myData.reqEndDateTime = cmd.getOptionValue("enddatetime");
+            myData.reqDuration = cmd.getOptionValue("duration");
+            myData.reqBarSize = cmd.getOptionValue("barsize");
+            myData.reqContract = reqContract;
+            myData.run();
         }
         catch (Exception e)
         {
             e.printStackTrace ();
         }
     } // end main
-
 }

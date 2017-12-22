@@ -51,8 +51,8 @@ public class GetEventsFromFxCalendar implements CommandLineRunner {
         String date = "Oct9.2017";    
         logger.info("Query calendar events for date " + date);
         //List<CalendarEvent> event = queryCalendarEvent(date);
-        getAllEventsOnMongo("2017");
-        getAllEventsFromMongo();
+        //TODO getAllEventsOnMongo("2017");
+        //TODO getAllEventsFromMongo();
     }
 
     private void getAllEventsOnMongo(String year) {

@@ -16,44 +16,48 @@ public class Bar {
     @Id
     private String id;
     
-    private String instrument;
-    private String epochTimestamp;
+    private String ticker;
+    private String epoch;
     private String timestamp;
     private String period;
-    private Double open;
-    private Double high;
-    private Double low;
-    private Double close;
+    private double open;
+    private double high;
+    private double low;
+    private double close;
+    private long volume;
+    private String metadata;
 
     public Bar() {};
     
-    public Bar(String instrument, String epochTimestamp, String timestamp, 
-            String period, Double open, Double high, Double low, Double close) {
-        this.instrument = instrument;
-        this.epochTimestamp = epochTimestamp;
+    public Bar(String ticker, String timestamp, String epochTimestamp, 
+            String period, double open, double high, double low, double close,
+            long volume, String metadata) {
+        this.ticker = ticker;
         this.timestamp = timestamp;
+        this.epoch = epochTimestamp;
         this.period = period;
         this.open = open;
         this.high = high;
         this.low = low;
         this.close = close;
+        this.volume = volume;
+        this.metadata = metadata;
     }
-
     
-    public String getInstrument() {
-        return instrument;
+    public String getTicker() {
+        return ticker;
     }
 
-    public void setInstrument(String instrument) {
-        this.instrument = instrument;
+    public void setTicker(String ticker) {
+        this.ticker = ticker;
     }
 
-    public String getEpochTimestamp() {
-        return epochTimestamp;
+    public String getEpoch() {
+        return epoch;
     }
 
-    public void setEpochTimestamp(String epochTimestamp) {
-        this.epochTimestamp = epochTimestamp;
+    public void setEpoch(String epochTimestamp) {
+        this.epoch = epochTimestamp;
     }
 
     public String getTimestamp() {
@@ -103,17 +107,29 @@ public class Bar {
     public void setClose(Double close) {
         this.close = close;
     }
+    
+    public long getVolume() {
+        return volume;
+    }
 
-    @Override
-    public String toString() {
-        return "Bar{" + "id=" + id + ", instrument=" + instrument + ", "
-                + "epochTimestamp=" + epochTimestamp + ", timestamp=" + timestamp + 
-                ", period=" + period + ", open=" + open + ", high=" + high + 
-                ", low=" + low + ", close=" + close + '}';
+    public void setVolume(long volume) {
+        this.volume = volume;
+    }
+
+    public String getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(String metadata) {
+        this.metadata = metadata;
     }
     
-    
-            
-            
-  
+    @Override
+    public String toString() {
+        return "Bar{" + "id=" + id + ", ticker=" + ticker + ", "
+                + "epoch=" + epoch + ", timestamp=" + timestamp + 
+                ", period=" + period + ", open=" + open + ", high=" + high + 
+                ", low=" + low + ", close=" + close + ", volume=" + volume + 
+                 ", metadata=" + metadata + '}';
+    }
 }
